@@ -9,8 +9,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import axios from 'axios';
-import { kosMockApiClient } from '../../services/apiClient';
+import { userApiClient, kosMockApiClient } from '../../services/apiClient';
 
 interface RegisterFormData {
   userId: string;
@@ -127,12 +126,7 @@ export const RegisterForm: React.FC = () => {
         permissions: ["BILL_INQUIRY", "PRODUCT_CHANGE"]
       };
 
-      await axios.post('http://localhost:8081/api/v1/auth/register', requestData, {
-        headers: {
-          'Content-Type': 'application/json',
-          'accept': '*/*'
-        }
-      });
+      await userApiClient.post('/auth/register', requestData);
 
       // 회원가입 성공 후 mock data API 호출
       try {
