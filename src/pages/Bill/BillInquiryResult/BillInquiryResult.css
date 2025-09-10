@@ -1,0 +1,280 @@
+.bill-inquiry-result {
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding-bottom: 80px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #e9ecef;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #343a40;
+  margin-right: 16px;
+  padding: 4px 8px;
+}
+
+.back-btn:hover {
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #343a40;
+  margin: 0;
+}
+
+.loading, .error {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.loading {
+  color: #6c757d;
+  font-size: 16px;
+}
+
+.error {
+  color: #dc3545;
+}
+
+.error p {
+  margin: 0 0 20px 0;
+  font-size: 16px;
+}
+
+.bill-summary {
+  background-color: #ffffff;
+  padding: 32px 20px;
+  text-align: center;
+  border-bottom: 8px solid #f8f9fa;
+}
+
+.billing-month {
+  font-size: 18px;
+  color: #6c757d;
+  margin-bottom: 12px;
+}
+
+.total-amount {
+  font-size: 36px;
+  font-weight: 700;
+  color: #007bff;
+  margin-bottom: 8px;
+}
+
+.product-name {
+  font-size: 16px;
+  color: #495057;
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border-radius: 20px;
+  display: inline-block;
+}
+
+.bill-sections {
+  background-color: #ffffff;
+  margin: 0;
+}
+
+.bill-section {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.section-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s;
+}
+
+.section-header:hover {
+  background-color: #f8f9fa;
+}
+
+.section-header.expanded {
+  background-color: #f8f9fa;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 600;
+  color: #343a40;
+}
+
+.section-title .icon {
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+.arrow {
+  font-size: 14px;
+  color: #6c757d;
+  transform: rotate(0deg);
+  transition: transform 0.2s;
+}
+
+.section-header.expanded .arrow {
+  transform: rotate(180deg);
+}
+
+.section-content {
+  padding: 0 20px 20px 20px;
+  background-color: #ffffff;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-bottom: 1px solid #f8f9fa;
+}
+
+.detail-item:last-child {
+  border-bottom: none;
+}
+
+.detail-item.total {
+  border-top: 1px solid #e9ecef;
+  padding-top: 16px;
+  margin-top: 12px;
+  font-weight: 600;
+}
+
+.detail-item .label {
+  font-size: 14px;
+  color: #495057;
+}
+
+.detail-item .amount {
+  font-size: 16px;
+  font-weight: 600;
+  color: #343a40;
+  text-align: right;
+}
+
+.detail-item .amount.discount {
+  color: #28a745;
+}
+
+.discount-type {
+  display: block;
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+/* .divider 스타일 제거됨 - 이중선 없애기 */
+
+.usage-item, .info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+}
+
+.usage-item .label, .info-item .label {
+  font-size: 14px;
+  color: #495057;
+}
+
+.usage-item .value, .info-item .value {
+  font-size: 14px;
+  color: #343a40;
+  font-weight: 500;
+}
+
+.action-buttons {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  background-color: #ffffff;
+  border-top: 1px solid #e9ecef;
+}
+
+.btn-secondary, .btn-primary {
+  flex: 1;
+  padding: 14px 0;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-secondary {
+  background-color: #f8f9fa;
+  color: #495057;
+  border: 1px solid #dee2e6;
+}
+
+.btn-secondary:hover {
+  background-color: #e9ecef;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 480px) {
+  .total-amount {
+    font-size: 32px;
+  }
+  
+  .billing-month {
+    font-size: 16px;
+  }
+  
+  .product-name {
+    font-size: 14px;
+  }
+  
+  .section-title {
+    font-size: 15px;
+  }
+  
+  .detail-item .amount {
+    font-size: 15px;
+  }
+}
+
+/* 아이폰 X 이상 Safe Area 대응 */
+@supports (padding: max(0px)) {
+  .action-buttons {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}

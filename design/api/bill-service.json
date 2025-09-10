@@ -1,0 +1,603 @@
+{
+  "openapi" : "3.0.1",
+  "info" : {
+    "title" : "Bill Service API",
+    "description" : "통신요금 관리 서비스 - 요금 조회 및 관리 API",
+    "contact" : {
+      "name" : "PhoneBill Development Team",
+      "email" : "dev@phonebill.com"
+    },
+    "version" : "1.0.0"
+  },
+  "servers" : [ {
+    "url" : "http://localhost:8082",
+    "description" : "Local Development"
+  }, {
+    "url" : "{protocol}://{host}:{port}",
+    "description" : "Custom Server",
+    "variables" : {
+      "protocol" : {
+        "description" : "Protocol (http or https)",
+        "default" : "http",
+        "enum" : [ "http", "https" ]
+      },
+      "host" : {
+        "description" : "Server host",
+        "default" : "localhost"
+      },
+      "port" : {
+        "description" : "Server port",
+        "default" : "8082"
+      }
+    }
+  } ],
+  "security" : [ {
+    "bearerAuth" : [ ]
+  } ],
+  "tags" : [ {
+    "name" : "Bill Inquiry",
+    "description" : "요금조회 관련 API"
+  } ],
+  "paths" : {
+    "/api/v1/bills/inquiry" : {
+      "post" : {
+        "tags" : [ "Bill Inquiry" ],
+        "summary" : "요금조회 요청",
+        "description" : "지정된 회선번호와 조회월의 요금 정보를 조회합니다. 캐시 확인 후 KOS 시스템 연동을 통해 실시간 데이터를 제공합니다.",
+        "operationId" : "inquireBill",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/BillInquiryRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "요금조회 완료 (동기 처리)",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "400" : {
+            "description" : "잘못된 요청 데이터",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/KosCommonResponseKosBillInquiryResponse"
+                }
+              }
+            }
+          },
+          "503" : {
+            "description" : "KOS 시스템 장애 (Circuit Breaker Open)",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/KosCommonResponseKosBillInquiryResponse"
+                }
+              }
+            }
+          },
+          "202" : {
+            "description" : "요금조회 요청 접수 (비동기 처리)",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/KosCommonResponseKosBillInquiryResponse"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/bills/menu" : {
+      "get" : {
+        "tags" : [ "Bill Inquiry" ],
+        "summary" : "요금조회 메뉴 조회",
+        "description" : "요금조회 메뉴 화면에 필요한 정보(고객정보, 조회가능월)를 제공합니다.",
+        "operationId" : "getBillMenu",
+        "responses" : {
+          "401" : {
+            "description" : "인증 실패",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseBillMenuResponse"
+                }
+              }
+            }
+          },
+          "200" : {
+            "description" : "요금조회 메뉴 정보 조회 성공",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponse"
+                }
+              }
+            }
+          },
+          "500" : {
+            "description" : "서버 내부 오류",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseBillMenuResponse"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    },
+    "/api/v1/bills/history" : {
+      "get" : {
+        "tags" : [ "Bill Inquiry" ],
+        "summary" : "요금조회 이력 조회",
+        "description" : "사용자의 요금조회 요청 및 처리 이력을 페이징으로 제공합니다.",
+        "operationId" : "getBillHistory",
+        "parameters" : [ {
+          "name" : "lineNumber",
+          "in" : "query",
+          "description" : "회선번호 (미입력시 인증된 사용자의 모든 회선)",
+          "required" : false,
+          "schema" : {
+            "pattern" : "^010-\\d{4}-\\d{4}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "startDate",
+          "in" : "query",
+          "description" : "조회 시작일 (YYYY-MM-DD)",
+          "required" : false,
+          "schema" : {
+            "pattern" : "^\\d{4}-\\d{2}-\\d{2}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "endDate",
+          "in" : "query",
+          "description" : "조회 종료일 (YYYY-MM-DD)",
+          "required" : false,
+          "schema" : {
+            "pattern" : "^\\d{4}-\\d{2}-\\d{2}$",
+            "type" : "string"
+          }
+        }, {
+          "name" : "page",
+          "in" : "query",
+          "description" : "페이지 번호 (1부터 시작)",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 1
+          }
+        }, {
+          "name" : "size",
+          "in" : "query",
+          "description" : "페이지 크기",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32",
+            "default" : 20
+          }
+        }, {
+          "name" : "status",
+          "in" : "query",
+          "description" : "처리 상태 필터",
+          "required" : false,
+          "schema" : {
+            "type" : "string",
+            "enum" : [ "COMPLETED", "PROCESSING", "FAILED" ]
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "요금조회 이력 조회 성공",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseBillHistoryResponse"
+                }
+              }
+            }
+          }
+        },
+        "security" : [ {
+          "bearerAuth" : [ ]
+        } ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "BillInquiryRequest" : {
+        "required" : [ "lineNumber" ],
+        "type" : "object",
+        "properties" : {
+          "lineNumber" : {
+            "pattern" : "^010-\\d{4}-\\d{4}$",
+            "type" : "string"
+          },
+          "inquiryMonth" : {
+            "pattern" : "^\\d{6}$",
+            "type" : "string"
+          }
+        }
+      },
+      "ApiResponse" : {
+        "type" : "object",
+        "properties" : {
+          "success" : {
+            "type" : "boolean"
+          },
+          "resultCode" : {
+            "type" : "string"
+          },
+          "resultMessage" : {
+            "type" : "string"
+          },
+          "data" : {
+            "type" : "object"
+          },
+          "error" : {
+            "$ref" : "#/components/schemas/ErrorDetail"
+          },
+          "timestamp" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ErrorDetail" : {
+        "type" : "object",
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "detail" : {
+            "type" : "string"
+          },
+          "timestamp" : {
+            "type" : "string",
+            "format" : "date-time"
+          }
+        }
+      },
+      "BillInfo" : {
+        "type" : "object",
+        "properties" : {
+          "lineNumber" : {
+            "type" : "string",
+            "description" : "회선번호",
+            "example" : "01012345678"
+          },
+          "billingMonth" : {
+            "type" : "string",
+            "description" : "청구월",
+            "example" : "202501"
+          },
+          "productCode" : {
+            "type" : "string",
+            "description" : "상품 코드",
+            "example" : "5G-PREMIUM-001"
+          },
+          "productName" : {
+            "type" : "string",
+            "description" : "상품명",
+            "example" : "5G 프리미엄 플랜"
+          },
+          "monthlyFee" : {
+            "type" : "number",
+            "description" : "월 기본료",
+            "example" : 89000
+          },
+          "usageFee" : {
+            "type" : "number",
+            "description" : "사용료",
+            "example" : 15000
+          },
+          "discountAmount" : {
+            "type" : "number",
+            "description" : "할인 금액",
+            "example" : 5000
+          },
+          "totalFee" : {
+            "type" : "number",
+            "description" : "총 요금",
+            "example" : 99000
+          },
+          "dataUsage" : {
+            "type" : "string",
+            "description" : "데이터 사용량",
+            "example" : "150GB"
+          },
+          "voiceUsage" : {
+            "type" : "string",
+            "description" : "음성 사용량",
+            "example" : "250분"
+          },
+          "smsUsage" : {
+            "type" : "string",
+            "description" : "SMS 사용량",
+            "example" : "50건"
+          },
+          "billStatus" : {
+            "type" : "string",
+            "description" : "청구 상태",
+            "example" : "CONFIRMED"
+          },
+          "dueDate" : {
+            "type" : "string",
+            "description" : "납부 기한",
+            "example" : "20250125"
+          }
+        },
+        "description" : "요금 정보"
+      },
+      "CustomerInfo" : {
+        "type" : "object",
+        "properties" : {
+          "customerName" : {
+            "type" : "string",
+            "description" : "고객명",
+            "example" : "김테스트"
+          },
+          "customerId" : {
+            "type" : "string",
+            "description" : "고객 ID",
+            "example" : "CUST000001"
+          },
+          "operatorCode" : {
+            "type" : "string",
+            "description" : "통신사업자 코드",
+            "example" : "KT"
+          },
+          "lineStatus" : {
+            "type" : "string",
+            "description" : "회선 상태",
+            "example" : "ACTIVE"
+          }
+        },
+        "description" : "고객 정보"
+      },
+      "KosBillInquiryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "requestId" : {
+            "type" : "string",
+            "description" : "요청 ID",
+            "example" : "REQ_20250108_001"
+          },
+          "procStatus" : {
+            "type" : "string",
+            "description" : "처리 상태",
+            "example" : "SUCCESS"
+          },
+          "resultCode" : {
+            "type" : "string",
+            "description" : "처리 결과 코드",
+            "example" : "0000"
+          },
+          "resultMessage" : {
+            "type" : "string",
+            "description" : "처리 결과 메시지",
+            "example" : "정상 처리되었습니다"
+          },
+          "billInfo" : {
+            "$ref" : "#/components/schemas/BillInfo"
+          },
+          "customerInfo" : {
+            "$ref" : "#/components/schemas/CustomerInfo"
+          }
+        },
+        "description" : "KOS 요금 조회 응답"
+      },
+      "KosCommonResponseKosBillInquiryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "success" : {
+            "type" : "boolean",
+            "description" : "성공 여부",
+            "example" : true
+          },
+          "resultCode" : {
+            "type" : "string",
+            "description" : "처리 결과 코드",
+            "example" : "0000"
+          },
+          "resultMessage" : {
+            "type" : "string",
+            "description" : "처리 결과 메시지",
+            "example" : "정상 처리되었습니다"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/KosBillInquiryResponse"
+          },
+          "timestamp" : {
+            "type" : "string",
+            "description" : "처리 시간",
+            "format" : "date-time"
+          },
+          "traceId" : {
+            "type" : "string",
+            "description" : "요청 추적 ID",
+            "example" : "TRACE_20250108_001"
+          }
+        },
+        "description" : "KOS 공통 응답"
+      },
+      "ApiResponseBillMenuResponse" : {
+        "type" : "object",
+        "properties" : {
+          "success" : {
+            "type" : "boolean"
+          },
+          "resultCode" : {
+            "type" : "string"
+          },
+          "resultMessage" : {
+            "type" : "string"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/BillMenuResponse"
+          },
+          "error" : {
+            "$ref" : "#/components/schemas/ErrorDetail"
+          },
+          "timestamp" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "BillMenuResponse" : {
+        "type" : "object",
+        "properties" : {
+          "customerInfo" : {
+            "$ref" : "#/components/schemas/CustomerInfo"
+          },
+          "availableMonths" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          },
+          "currentMonth" : {
+            "type" : "string"
+          }
+        }
+      },
+      "ApiResponseBillHistoryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "success" : {
+            "type" : "boolean"
+          },
+          "resultCode" : {
+            "type" : "string"
+          },
+          "resultMessage" : {
+            "type" : "string"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/BillHistoryResponse"
+          },
+          "error" : {
+            "$ref" : "#/components/schemas/ErrorDetail"
+          },
+          "timestamp" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        }
+      },
+      "BillHistoryItem" : {
+        "type" : "object",
+        "properties" : {
+          "requestId" : {
+            "type" : "string"
+          },
+          "lineNumber" : {
+            "type" : "string"
+          },
+          "inquiryMonth" : {
+            "type" : "string"
+          },
+          "requestTime" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "processTime" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "COMPLETED", "PROCESSING", "FAILED" ]
+          },
+          "resultSummary" : {
+            "type" : "string"
+          }
+        }
+      },
+      "BillHistoryResponse" : {
+        "type" : "object",
+        "properties" : {
+          "items" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/BillHistoryItem"
+            }
+          },
+          "pagination" : {
+            "$ref" : "#/components/schemas/PaginationInfo"
+          }
+        }
+      },
+      "PaginationInfo" : {
+        "type" : "object",
+        "properties" : {
+          "currentPage" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "totalPages" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "totalItems" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "pageSize" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "hasNext" : {
+            "type" : "boolean"
+          },
+          "hasPrevious" : {
+            "type" : "boolean"
+          }
+        }
+      }
+    },
+    "securitySchemes" : {
+      "bearerAuth" : {
+        "type" : "http",
+        "scheme" : "bearer",
+        "bearerFormat" : "JWT"
+      }
+    }
+  }
+}
