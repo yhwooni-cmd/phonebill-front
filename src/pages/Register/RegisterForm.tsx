@@ -33,6 +33,11 @@ export const RegisterForm: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [apiError, setApiError] = useState<string>('');
+  const [mockDataLoading, setMockDataLoading] = useState(false);
+  const [mockDataMessage, setMockDataMessage] = useState<string>('');
+  const [registrationComplete, setRegistrationComplete] = useState(false);
+  const [mockDataComplete, setMockDataComplete] = useState(false);
+  const [registeredUserData, setRegisteredUserData] = useState<any>(null);
 
   // 20자 랜덤 customerId 생성 (중복 방지를 위해 타임스탬프 포함)
   const generateCustomerId = (): string => {
@@ -73,6 +78,11 @@ export const RegisterForm: React.FC = () => {
     // API 에러 제거
     if (apiError) {
       setApiError('');
+    }
+    
+    // Mock 데이터 메시지 제거
+    if (mockDataMessage) {
+      setMockDataMessage('');
     }
   };
 
@@ -128,28 +138,14 @@ export const RegisterForm: React.FC = () => {
 
       await userApiClient.post('/auth/register', requestData);
 
-      // 회원가입 성공 후 mock data API 호출
-      try {
-        const mockDataRequest = {
-          customerId: requestData.customerId,
-          lineNumber: formData.lineNumber.replace(/-/g, '') // 대시 제거
-        };
-
-        await kosMockApiClient.post('/kos/mock-datas', mockDataRequest);
-
-        console.log('Mock data 생성 완료:', mockDataRequest);
-      } catch (mockError: any) {
-        console.warn('Mock data 생성 실패:', mockError);
-        // Mock data 생성 실패는 회원가입 실패로 처리하지 않음
-      }
-
-      // 회원가입 성공 시 로그인 페이지로 이동
-      navigate('/login', {
-        state: { 
-          message: '회원가입이 완료되었습니다. 로그인해주세요.',
-          userId: formData.userId 
-        }
+      // 회원가입 성공 시 상태 업데이트
+      setRegistrationComplete(true);
+      setRegisteredUserData({
+        ...requestData,
+        lineNumberFormatted: formData.lineNumber
       });
+      setApiError('');
+      setMockDataMessage('회원가입이 완료되었습니다. Mock 데이터를 생성해주세요.');
 
     } catch (error: any) {
       console.error('회원가입 실패:', error);
@@ -186,6 +182,50 @@ export const RegisterForm: React.FC = () => {
     }
   };
 
+  // Mock 데이터 생성 함수
+  const handleCreateMockData = async () => {
+    if (!registeredUserData) return;
+
+    setMockDataLoading(true);
+    setMockDataMessage('');
+
+    try {
+      const mockDataRequest = {
+        customerId: registeredUserData.customerId,
+        lineNumber: registeredUserData.lineNumberFormatted.replace(/-/g, '') // 대시 제거
+      };
+
+      await kosMockApiClient.post('/kos/mock-datas', mockDataRequest);
+      
+      setMockDataComplete(true);
+      setMockDataMessage('Mock 데이터가 성공적으로 생성되었습니다! 이제 로그인할 수 있습니다.');
+      console.log('Mock data 생성 완료:', mockDataRequest);
+
+    } catch (mockError: any) {
+      console.error('Mock data 생성 실패:', mockError);
+      
+      if (mockError.response?.data?.message) {
+        setMockDataMessage(`Mock 데이터 생성 실패: ${mockError.response.data.message}`);
+      } else if (mockError.response?.status === 403) {
+        setMockDataMessage('Mock 데이터 생성 권한이 없습니다. 관리자에게 문의하세요.');
+      } else {
+        setMockDataMessage('Mock 데이터 생성 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    } finally {
+      setMockDataLoading(false);
+    }
+  };
+
+  // 로그인 페이지로 이동
+  const handleGoToLogin = () => {
+    navigate('/login', {
+      state: { 
+        message: '회원가입과 Mock 데이터 생성이 완료되었습니다. 로그인해주세요.',
+        userId: registeredUserData?.userId 
+      }
+    });
+  };
+
   return (
     <Box component="form" onSubmit={handleSubmit} noValidate>
       {/* API 에러 메시지 */}
@@ -196,6 +236,17 @@ export const RegisterForm: React.FC = () => {
           onClose={() => setApiError('')}
         >
           {apiError}
+        </Alert>
+      )}
+
+      {/* Mock 데이터 메시지 */}
+      {mockDataMessage && (
+        <Alert 
+          severity={mockDataComplete ? "success" : registrationComplete ? "info" : "error"} 
+          sx={{ mb: 2 }}
+          onClose={() => setMockDataMessage('')}
+        >
+          {mockDataMessage}
         </Alert>
       )}
 
@@ -212,7 +263,7 @@ export const RegisterForm: React.FC = () => {
         onChange={handleInputChange('userId')}
         error={!!errors.userId}
         helperText={errors.userId}
-        disabled={loading}
+        disabled={loading || registrationComplete}
         sx={{ mb: 2 }}
       />
 
@@ -229,7 +280,7 @@ export const RegisterForm: React.FC = () => {
         onChange={handleInputChange('userName')}
         error={!!errors.userName}
         helperText={errors.userName}
-        disabled={loading}
+        disabled={loading || registrationComplete}
         sx={{ mb: 2 }}
       />
 
@@ -246,7 +297,7 @@ export const RegisterForm: React.FC = () => {
         onChange={handleInputChange('lineNumber')}
         error={!!errors.lineNumber}
         helperText={errors.lineNumber}
-        disabled={loading}
+        disabled={loading || registrationComplete}
         inputProps={{ maxLength: 13 }}
         sx={{ mb: 2 }}
       />
@@ -265,7 +316,7 @@ export const RegisterForm: React.FC = () => {
         onChange={handleInputChange('password')}
         error={!!errors.password}
         helperText={errors.password}
-        disabled={loading}
+        disabled={loading || registrationComplete}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -297,7 +348,7 @@ export const RegisterForm: React.FC = () => {
         onChange={handleInputChange('confirmPassword')}
         error={!!errors.confirmPassword}
         helperText={errors.confirmPassword}
-        disabled={loading}
+        disabled={loading || registrationComplete}
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
@@ -320,7 +371,7 @@ export const RegisterForm: React.FC = () => {
         type="submit"
         fullWidth
         variant="contained"
-        disabled={loading}
+        disabled={loading || registrationComplete}
         sx={{
           mt: 1,
           mb: 2,
@@ -330,8 +381,46 @@ export const RegisterForm: React.FC = () => {
           borderRadius: 2,
         }}
       >
-        {loading ? '가입 중...' : '회원가입'}
+        {loading ? '가입 중...' : registrationComplete ? '회원가입 완료' : '회원가입'}
       </Button>
+
+      {/* Mock 데이터 생성 버튼 - 회원가입 완료 후에만 표시 */}
+      {registrationComplete && (
+        <Button
+          fullWidth
+          variant="outlined"
+          disabled={mockDataLoading || mockDataComplete}
+          onClick={handleCreateMockData}
+          sx={{
+            mb: 2,
+            py: 1.5,
+            fontSize: '1rem',
+            fontWeight: 600,
+            borderRadius: 2,
+          }}
+        >
+          {mockDataLoading ? 'Mock 데이터 생성 중...' : mockDataComplete ? 'Mock 데이터 생성 완료' : 'Mock 데이터 생성'}
+        </Button>
+      )}
+
+      {/* 로그인 버튼 - Mock 데이터 생성 완료 후에만 표시 */}
+      {mockDataComplete && (
+        <Button
+          fullWidth
+          variant="contained"
+          color="primary"
+          onClick={handleGoToLogin}
+          sx={{
+            mb: 2,
+            py: 1.5,
+            fontSize: '1rem',
+            fontWeight: 600,
+            borderRadius: 2,
+          }}
+        >
+          로그인하러 가기
+        </Button>
+      )}
     </Box>
   );
 };
