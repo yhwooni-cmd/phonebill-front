@@ -29,7 +29,7 @@ podTemplate(
             image: 'node:slim', 
             ttyEnabled: true, 
             command: 'cat',
-            resourceRequestCpu: '500m',
+            resourceRequestCpu: '400m',
             resourceRequestMemory: '1Gi',
             resourceLimitCpu: '2000m',
             resourceLimitMemory: '4Gi'
@@ -40,10 +40,10 @@ podTemplate(
             ttyEnabled: true, 
             command: 'cat', 
             privileged: true,
-            resourceRequestCpu: '500m',
-            resourceRequestMemory: '1Gi',
+            resourceRequestCpu: '400m',
+            resourceRequestMemory: '2Gi',
             resourceLimitCpu: '2000m',
-            resourceLimitMemory: '2Gi'
+            resourceLimitMemory: '4Gi'
         ),
         containerTemplate(
             name: 'azure-cli', 
@@ -60,7 +60,7 @@ podTemplate(
             image: 'sonarsource/sonar-scanner-cli:latest',
             command: 'cat',
             ttyEnabled: true,
-            resourceRequestCpu: '500m',
+            resourceRequestCpu: '200m',
             resourceRequestMemory: '1Gi',
             resourceLimitCpu: '1500m',
             resourceLimitMemory: '2Gi'
