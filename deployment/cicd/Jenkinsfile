@@ -76,7 +76,7 @@ podTemplate(
         def props
         def imageTag = getImageTag()
         def environment = params.ENVIRONMENT ?: 'dev'
-        def skipSonarQube = params.SKIP_SONARQUBE ?: true
+        def skipSonarQube = (params.SKIP_SONARQUBE?.toLowerCase() == 'true')
         def sonarScannerHome = '/opt/sonar-scanner'
         
         try {
@@ -107,8 +107,10 @@ podTemplate(
                 }
             }
 
-            if (!skipSonarQube) {
-                stage('SonarQube Analysis & Quality Gate') {
+            stage('SonarQube Analysis & Quality Gate') {
+                if (skipSonarQube) {
+                    echo "⏭️ Skipping SonarQube Analysis (SKIP_SONARQUBE=${params.SKIP_SONARQUBE})"
+                } else {
                     container('sonar-scanner') {
                         script {
                             try {
@@ -140,10 +142,6 @@ podTemplate(
                             }
                         }
                     }
-                }
-            } else {
-                stage('Skip SonarQube Analysis') {
-                    echo "🔄 SonarQube analysis skipped due to SKIP_SONARQUBE parameter"
                 }
             }
 
