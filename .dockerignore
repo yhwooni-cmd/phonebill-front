@@ -1,0 +1,13 @@
+images
+node_modules
+npm-debug.log
+build
+.git
+.github
+coverage
+.env*
+.cache
+dist
+logs
+**/*.log
+**/.DS_Store
