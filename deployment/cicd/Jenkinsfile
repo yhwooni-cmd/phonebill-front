@@ -41,9 +41,9 @@ podTemplate(
             command: 'cat', 
             privileged: true,
             resourceRequestCpu: '500m',
-            resourceRequestMemory: '2Gi',
+            resourceRequestMemory: '1Gi',
             resourceLimitCpu: '2000m',
-            resourceLimitMemory: '4Gi'
+            resourceLimitMemory: '2Gi'
         ),
         containerTemplate(
             name: 'azure-cli', 
