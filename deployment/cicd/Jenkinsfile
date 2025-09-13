@@ -115,13 +115,16 @@ podTemplate(
                                     timeout 300 ${sonarScannerHome}/bin/sonar-scanner \\
                                     -Dsonar.projectKey=phonebill-front-${environment} \\
                                     -Dsonar.projectName=phonebill-front-${environment} \\
-                                    -Dsonar.sources=src \\
+                                    -Dsonar.sources=src/components,src/pages,src/services,src/hooks,src/utils \\
                                     -Dsonar.tests=src \\
                                     -Dsonar.test.inclusions=src/**/*.test.js,src/**/*.test.jsx,src/**/*.test.ts,src/**/*.test.tsx \\
-                                    -Dsonar.exclusions=**/node_modules/**,**/build/**,**/dist/**,**/*.config.js,**/coverage/**,**/stores/** \\
+                                    -Dsonar.exclusions=**/node_modules/**,**/build/**,**/dist/**,**/*.config.js,**/coverage/**,**/stores/**,**/config/**,**/types/**,**/styles/**,**/assets/** \\
+                                    -Dsonar.scm.disabled=true \\
+                                    -Dsonar.sourceEncoding=UTF-8 \\
+                                    -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \\
                                     -Dsonar.scm.disabled=true \\
                                     -Dsonar.sourceEncoding=UTF-8
-                                """
+                                 """
                             }
                             
                             timeout(time: 5, unit: 'MINUTES') {
