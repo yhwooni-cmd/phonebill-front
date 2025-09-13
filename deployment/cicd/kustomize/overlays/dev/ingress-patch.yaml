@@ -7,13 +7,13 @@ metadata:
 spec:
   ingressClassName: nginx
   rules:
-    - host: phonebill.20.214.196.128.nip.io
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: phonebill-front
-                port:
-                  number: 8080
+  - host: phonebill.20.214.196.128.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: phonebill-front
+            port:
+              number: 8080

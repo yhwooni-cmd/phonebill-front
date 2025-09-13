@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: phonebill-front-staging
+
+resources:
+- ../../base
+
+namespace: staging
+
+commonLabels:
+  environment: staging
+
+images:
+- name: acrdigitalgarage01.azurecr.io/phonebill/phonebill-front
+  newTag: staging
+
+patches:
+- path: deployment-staging.yaml
+  target:
+    kind: Deployment
+    name: phonebill-front
+
+configMapGenerator:
+- name: phonebill-front-config
+  env: config.env
