@@ -164,7 +164,10 @@ podTemplate(
                             sh """
                                 podman build \\
                                     -f deployment/container/Dockerfile-frontend \\
-                                    -t acrdigitalgarage01.azurecr.io/phonebill/phonebill-front:${environment}-${imageTag} .
+                                    --build-arg PROJECT_FOLDER="." \\
+                                    --build-arg BUILD_FOLDER="deployment/container" \\
+                                    --build-arg EXPORT_PORT="8080" \\
+                                    -t {ACR_NAME}.azurecr.io/{SERVICE_NAME}/{SERVICE_NAME}:${environment}-${imageTag} .
 
                                 podman push acrdigitalgarage01.azurecr.io/phonebill/phonebill-front:${environment}-${imageTag}
                             """
