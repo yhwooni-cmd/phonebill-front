@@ -22,6 +22,7 @@ export class BillService {
     };
     
     // billingMonth 필드명 제거 (inquiryMonth로 변경됨)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { billingMonth, ...finalRequestData } = requestData;
     
     const response = await billApiClient.post<ApiResponse<BillInquiryResponse>>('/bills/inquiry', finalRequestData);
