@@ -119,15 +119,14 @@ podTemplate(
                                       timeout 300 ${sonarScannerHome}/bin/sonar-scanner \\
                                       -Dsonar.projectKey=phonebill-front-${environment} \\
                                       -Dsonar.projectName=phonebill-front-${environment} \\
-                                      -Dsonar.sources=src/components,src/pages,src/services,src/hooks \\
+                                      -Dsonar.sources=src \\
                                       -Dsonar.tests=src \\
-                                      -Dsonar.test.inclusions=src/**/*.test.js,src/**/*.test.jsx,src/**/*.test.ts,src/**/*.test.tsx \\
-                                      -Dsonar.exclusions=**/node_modules/**,**/build/**,**/dist/**,**/*.config.js,**/coverage/**,**/stores/**,**/config/**,**/types/**,**/styles/**,**/assets/** \\
+                                      -Dsonar.test.inclusions=**/*.test.ts,**/*.test.tsx,**/*.spec.ts,**/*.spec.tsx \\
+                                      -Dsonar.exclusions=node_modules/**,dist/**,build/**,coverage/**,**/*.config.js,**/*.config.ts,scripts/** \\
                                       -Dsonar.scm.disabled=true \\
                                       -Dsonar.sourceEncoding=UTF-8 \\
-                                      -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \\
-                                      -Dsonar.scm.disabled=true \\
-                                      -Dsonar.sourceEncoding=UTF-8
+                                      -Dsonar.typescript.tsconfigPaths=tsconfig.json \\
+                                      -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
                                     """
                                 }
                                 
