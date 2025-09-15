@@ -192,17 +192,16 @@ podTemplate(
                             git clone https://\${GIT_USERNAME}:\${GIT_TOKEN}@\${REPO_URL} manifest-repo
                             cd manifest-repo
 
-                            # Kustomize 설치
-                            curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
-                            mkdir -p \$HOME/bin && mv kustomize \$HOME/bin/
-                            export PATH=\$PATH:\$HOME/bin
+                            # 프론트엔드 이미지 태그 업데이트 (sed 명령 사용)
+                            echo "Updating phonebill-front image tag..."
+                            sed -i "s|image: acrdigitalgarage01.azurecr.io/phonebill/phonebill-front:.*|image: acrdigitalgarage01.azurecr.io/phonebill/phonebill-front:${environment}-${imageTag}|g" \\
+                                phonebill-front/kustomize/base/deployment.yaml
 
-                            # 프론트엔드 매니페스트 업데이트
-                            cd phonebill-front/kustomize/overlays/${environment}
-                            \$HOME/bin/kustomize edit set image acrdigitalgarage01.azurecr.io/phonebill/phonebill-front:${environment}-${imageTag}
+                            # 변경 사항 확인
+                            echo "Updated phonebill-front deployment.yaml:"
+                            grep "image: acrdigitalgarage01.azurecr.io/phonebill/phonebill-front" phonebill-front/kustomize/base/deployment.yaml
 
                             # Git 설정 및 푸시
-                            cd ../../../..
                             git config user.name "Jenkins CI"
                             git config user.email "jenkins@example.com"
                             git add .
