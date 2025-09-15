@@ -1,0 +1,174 @@
+name: Frontend CI/CD ArgoCD
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'package*.json'
+      - 'tsconfig*.json'
+      - 'vite.config.ts'
+      - 'index.html'
+      - '.github/**'
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      ENVIRONMENT:
+        description: 'Target environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      SKIP_SONARQUBE:
+        description: 'Skip SonarQube Analysis'
+        required: false
+        default: 'true'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+env:
+  REGISTRY: acrdigitalgarage01.azurecr.io
+  IMAGE_ORG: phonebill
+  RESOURCE_GROUP: rg-digitalgarage-01
+  AKS_CLUSTER: aks-digitalgarage-01
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.set_outputs.outputs.image_tag }}
+      environment: ${{ steps.set_outputs.outputs.environment }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Determine environment
+        id: determine_env
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.ENVIRONMENT || 'dev' }}"
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+
+      - name: Set outputs
+        id: set_outputs
+        run: |
+          IMAGE_TAG=$(date '+%Y%m%d%H%M%S')
+          ENVIRONMENT=${{ steps.determine_env.outputs.environment }}
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+  release:
+    name: Build and Push Images
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set image tag environment variable
+        run: |
+          echo "IMAGE_TAG=${{ needs.build.outputs.image_tag }}" >> $GITHUB_ENV
+          echo "ENVIRONMENT=${{ needs.build.outputs.environment }}" >> $GITHUB_ENV
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push Docker image
+        run: |
+          echo "Building and pushing phonebill-front:${{ env.ENVIRONMENT }}-${{ env.IMAGE_TAG }}"
+
+          docker build \
+            -f deployment/container/Dockerfile-frontend \
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/phonebill-front:${{ env.ENVIRONMENT }}-${{ env.IMAGE_TAG }} .
+
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_ORG }}/phonebill-front:${{ env.ENVIRONMENT }}-${{ env.IMAGE_TAG }}
+
+          echo "✅ Successfully built and pushed phonebill-front:${{ env.ENVIRONMENT }}-${{ env.IMAGE_TAG }}"
+
+  update-manifest:
+    name: Update Frontend Manifest Repository
+    needs: [build, release]
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Set image tag environment variable
+      run: |
+        echo "IMAGE_TAG=${{ needs.build.outputs.image_tag }}" >> $GITHUB_ENV
+        echo "ENVIRONMENT=${{ needs.build.outputs.environment }}" >> $GITHUB_ENV
+
+    - name: Update Frontend Manifest Repository
+      run: |
+        # 매니페스트 레포지토리 클론
+        REPO_URL=$(echo "https://github.com/cna-bootcamp/phonebill-manifest.git" | sed 's|https://||')
+        git clone https://${{ secrets.GIT_USERNAME }}:${{ secrets.GIT_PASSWORD }}@${REPO_URL} manifest-repo
+        cd manifest-repo
+
+        # Kustomize 설치
+        curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+        sudo mv kustomize /usr/local/bin/
+
+        # 프론트엔드 매니페스트 업데이트
+        cd phonebill-front/kustomize/overlays/${{ env.ENVIRONMENT }}
+
+        # 이미지 태그 업데이트
+        kustomize edit set image acrdigitalgarage01.azurecr.io/phonebill/phonebill-front:${{ env.ENVIRONMENT }}-${{ env.IMAGE_TAG }}
+
+        # Git 설정 및 푸시
+        cd ../../../..
+        git config user.name "GitHub Actions"
+        git config user.email "actions@github.com"
+        git add .
+        git commit -m "🚀 Update phonebill-front ${{ env.ENVIRONMENT }} image to ${{ env.ENVIRONMENT }}-${{ env.IMAGE_TAG }}"
+        git push origin main
+
+        echo "✅ 프론트엔드 매니페스트 업데이트 완료. ArgoCD가 자동으로 배포합니다."
