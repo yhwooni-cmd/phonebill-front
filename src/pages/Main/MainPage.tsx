@@ -138,7 +138,17 @@ export const MainPage: React.FC = () => {
           }}
         >
           <Toolbar>
-            <Typography variant="h6" component="h1" sx={{ flexGrow: 1, fontSize: '1.125rem', fontWeight: 600 }}>
+            <Typography 
+              variant="h6" 
+              component="h1" 
+              sx={{ 
+                flexGrow: 1, 
+                fontSize: '1.125rem', 
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+              onClick={() => navigate('/')}
+            >
               📱 통신요금 관리
             </Typography>
             <IconButton onClick={handleLogout} sx={{ color: 'text.primary' }} aria-label="로그아웃">
@@ -175,7 +185,9 @@ export const MainPage: React.FC = () => {
               flexGrow: 1,
               fontSize: '1.125rem',
               fontWeight: 600,
+              cursor: 'pointer',
             }}
+            onClick={() => navigate('/')}
           >
             📱 통신요금 관리
           </Typography>
